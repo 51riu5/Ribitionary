@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shared Nomenclature Dictionary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1, h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    button {
+      background: #007BFF;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .separator {
+      height: 1px;
+      background: #ddd;
+      margin: 20px 0;
+    }
+    .result {
+      margin-top: 15px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 10px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Shared Nomenclature Dictionary</h1>
+
+    <h3>Add New Word</h3>
+    <input type="text" id="wordInput" placeholder="Enter word">
+    <textarea id="meaningInput" placeholder="Enter meaning"></textarea>
+    <button id="addBtn">Add Word</button>
+
+    <div class="separator"></div>
+
+    <h3>Search Word</h3>
+    <input type="text" id="searchInput" placeholder="Search for a word">
+    <button id="searchBtn">Search</button>
+    <div id="result" class="result"></div>
+    
+    <div class="separator"></div>
+
+    <h3>All Words</h3>
+    <ul id="allWordsList"></ul>
+  </div>
+
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js"></script>
+
+  <script>
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC9WIDJkwGNYNtjkulikmuMq45pp0k4_aI",
+  authDomain: "ribitionary.firebaseapp.com",
+  databaseURL: "https://ribitionary-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ribitionary",
+  storageBucket: "ribitionary.firebasestorage.app",
+  messagingSenderId: "21706236287",
+  appId: "1:21706236287:web:d829e1f13aa645e246fa4a",
+  measurementId: "G-LC209LJDZ9"
+};
+
+
+
+    const addBtn = document.getElementById('addBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    const wordInput = document.getElementById('wordInput');
+    const meaningInput = document.getElementById('meaningInput');
+    const searchInput = document.getElementById('searchInput');
+    const resultDiv = document.getElementById('result');
+    const allWordsList = document.getElementById('allWordsList');
+
+    // Function to add word to Firebase
+    addBtn.addEventListener('click', () => {
+      const word = wordInput.value.trim().toLowerCase();
+      const meaning = meaningInput.value.trim();
+      
+      if (word === '' || meaning === '') {
+        alert('Please enter both a word and its meaning.');
+        return;
+      }
+
+      firebase.database().ref('dictionary/' + word).set({
+        meaning
+      }).then(() => {
+        alert('Word added successfully!');
+        wordInput.value = '';
+        meaningInput.value = '';
+        loadAllWords(); // Refresh the list of all words
+      });
+    });
+
+    // Function to search for a word in Firebase
+    searchBtn.addEventListener('click', () => {
+      const searchWord = searchInput.value.trim().toLowerCase();
+      
+      if (searchWord === '') {
+        alert('Please enter a word to search.');
+        return;
+      }
+
+      firebase.database().ref('dictionary/' + searchWord).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+          resultDiv.innerHTML = `<strong>${searchWord}:</strong> ${snapshot.val().meaning}`;
+        } else {
+          resultDiv.innerHTML = 'Word not found in the dictionary.';
+        }
+      });
+    });
+
+    // Function to load all words from Firebase
+    function loadAllWords() {
+      firebase.database().ref('dictionary').once('value').then(snapshot => {
+        allWordsList.innerHTML = ''; // Clear the list first
+        snapshot.forEach(childSnapshot => {
+          const word = childSnapshot.key;
+          const meaning = childSnapshot.val().meaning;
+
+          const listItem = document.createElement('li');
+          listItem.textContent = `${word}: ${meaning}`;
+          allWordsList.appendChild(listItem);
+        });
+      });
+    }
+
+    // Load all words on page load
+    loadAllWords();
+  </script>
+</body>
+</html>
